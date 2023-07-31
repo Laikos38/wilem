@@ -30,6 +30,7 @@ class FuzzerDominioConfig(FuzzerConfig):
     repetition_permutable: bool = True
     replacement_permutable: bool = True
     transposition_permutable: bool = True
+    vowel_swap_permutable: bool = True
 
 
 class Fuzzer:
@@ -379,13 +380,16 @@ class FuzzerDominio(Fuzzer):
                 result.append(word + separator + permutable)
         return list(set(result))
 
+    def get_fuzzed_as_plain_list(self):
+        return [f["fuzzed"] for f in self.fuzzed_list_dict]
+
     def generate(self) -> None:
         if self.config.addition:
             for fuzzed in self.addition_fuzzer():
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "addition", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
-                if self.config.append_word or self.config.tld:
+                if self.config.addition_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.bitsquatting:
             for fuzzed in self.bitsquatting_fuzzer():
@@ -407,41 +411,43 @@ class FuzzerDominio(Fuzzer):
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "insertion", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
-                if self.config.append_word or self.config.tld:
+                if self.config.insertion_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.omission:
             for fuzzed in self.omission_fuzzer():
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "omission", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
-                if self.config.append_word or self.config.tld:
+                if self.config.omission_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.repetition:
             for fuzzed in self.repetition_fuzzer():
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "repetition", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
-                if self.config.append_word or self.config.tld:
+                if self.config.repetition_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.replacement:
             for fuzzed in self.replacement_fuzzer():
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "replacement", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
-                if self.config.append_word or self.config.tld:
+                if self.config.replacement_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.transposition:
             for fuzzed in self.transposition_fuzzer():
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "transposition", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
-                if self.config.append_word or self.config.tld:
+                if self.config.transposition_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.vowel_swap:
             for fuzzed in self.vowel_swap_fuzzer():
                 self.fuzzed_list_dict.append(
                     {"fuzzer": "vowel_swap", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
                 )
+                if self.config.vowel_swap_permutable and (self.config.append_word or self.config.tld):
+                    self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.subdomain:
             for fuzzed in self.subdomain_fuzzer():
                 self.fuzzed_list_dict.append({"fuzzer": "subdomain", "fuzzed": ".".join(filter(None, [fuzzed, self.tld]))})
@@ -468,6 +474,6 @@ class FuzzerDominio(Fuzzer):
             self.permutable_fuzzed_list_dict += aux
         if self.config.tld:
             for fuzzed in self.tld_fuzzer():
-                self.fuzzed_list_dict.append({"fuzzer": "tld", "domain-name": ".".join(filter(None, [self.subdominio, fuzzed]))})
-                self.fuzzed_list_dict.append({"fuzzer": "tld", "domain-name": ".".join(filter(None, [fuzzed]))})
+                self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed]))})
+                self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [fuzzed]))})
         del self.permutable_fuzzed_list_dict
