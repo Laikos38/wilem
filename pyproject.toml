@@ -5,9 +5,11 @@ description = "Words analyzer y comparator, oriented to phishing domains filters
 authors = ["Francisco <j.f.maurino@gmail.com>"]
 license = "GPL-3.0"
 readme = "README.md"
+include = ["wilem/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+tld = "^0.13"
 
 
 [tool.poetry.group.dev.dependencies]

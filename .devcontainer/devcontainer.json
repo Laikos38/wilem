@@ -1,0 +1,29 @@
+{
+	"name": "Python 3",
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"nodeGypDependencies": true,
+			"version": "18"
+		}
+	},
+	// "forwardPorts": [8000], // windows
+	"runArgs": [
+		// "--network=laikos", // windows
+		"--network=host", // linux
+		"--name=wilem"
+	],
+	"postCreateCommand": "sh ./.devcontainer/post_create.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"eamodio.gitlens",
+				"ms-python.python",
+				"formulahendry.auto-rename-tag",
+				"ms-python.mypy-type-checker",
+				"ms-python.isort",
+				"ms-python.black-formatter"
+			]
+		}
+	}
+}
