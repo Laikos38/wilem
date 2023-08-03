@@ -3,30 +3,30 @@ from typing import NamedTuple
 
 import tld as tld_module
 
-ParsedDominio = NamedTuple("ParsedDominio", [("subdominio", str), ("dominio", str), ("tld", str)])
+ParsedDomain = NamedTuple("ParsedDomain", [("subdomain", str), ("domain", str), ("tld", str)])
 
 
-def validar_dominio_str(dominio: str) -> bool:
+def validate_domain_str(domain: str) -> bool:
     """
-    Valida que el dominio sea válido.
+    Validates the domain.
     """
     try:
-        tld_module.get_fld(dominio, fix_protocol=True)
+        tld_module.get_fld(domain, fix_protocol=True)
         pattern = re.compile(r"^(?:http(s)?:\/\/)?[\w%.-]+(?:\.[\w\.-]+)+[\w%\-\._~:\/?#[\]@!\$&'\(\)\*\+,;=.%]+$")
-        if not pattern.match(dominio):
+        if not pattern.match(domain):
             return False
     except Exception:
         return False
     return True
 
 
-def parse_dominio(dominio: str, fix_protocol: bool = False) -> ParsedDominio:
+def parse_domain(domain: str, fix_protocol: bool = False) -> ParsedDomain:
     """
-    Retorna las partes del dominio/url como namedptuple.
-    Si el dominio es inválido lanza ValueError.
-    Attrs: subdominio, dominio, tld.
+    Returns all parts of the URL as namedtuple.
+    If the domain is invalid raises ValueError.
+    Attrs: subdomain, domain, tld.
     """
-    if not validar_dominio_str(dominio):
-        raise ValueError("Dominio inválido.")
-    tld_object: tld_module.Result = tld_module.get_tld(dominio, fix_protocol=fix_protocol, as_object=True)  # type: ignore
-    return ParsedDominio(tld_object.subdomain, tld_object.domain, tld_object.tld)
+    if not validate_domain_str(domain):
+        raise ValueError("Invalid domain.")
+    tld_object: tld_module.Result = tld_module.get_tld(domain, fix_protocol=fix_protocol, as_object=True)  # type: ignore
+    return ParsedDomain(tld_object.subdomain, tld_object.domain, tld_object.tld)

@@ -20,7 +20,7 @@ class FuzzerConfig:
 
 
 @dataclass
-class FuzzerDominioConfig(FuzzerConfig):
+class FuzzerDomainConfig(FuzzerConfig):
     subdomain: bool = True
     append_word: bool = True
     tld: bool = True
@@ -34,8 +34,8 @@ class FuzzerDominioConfig(FuzzerConfig):
 
 
 class Fuzzer:
-    def __init__(self, palabra: str, config: FuzzerConfig | None = None) -> None:
-        self.palabra: str = palabra
+    def __init__(self, word: str, config: FuzzerConfig | None = None) -> None:
+        self.word: str = word
         self.config = config or FuzzerConfig()
         self.fuzzed_list_dict: List[Dict[str, str]] = []
         self.fuzzed_as_plain_list: List[str] = []
@@ -186,20 +186,20 @@ class Fuzzer:
     def bitsquatting_fuzzer(self) -> List[str]:
         result = []
         masks = [1, 2, 4, 8, 16, 32, 64, 128]
-        for i in range(0, len(self.palabra)):
-            c = self.palabra[i]
+        for i in range(0, len(self.word)):
+            c = self.word[i]
             for j in range(0, len(masks)):
                 b = chr(ord(c) ^ masks[j])
                 o = ord(b)
                 if (o >= 48 and o <= 57) or (o >= 97 and o <= 122) or o == 45:
-                    result.append(self.palabra[:i] + b + self.palabra[i + 1 :])
+                    result.append(self.word[:i] + b + self.word[i + 1 :])
         return result
 
     def homoglyph_fuzzer(self) -> List[str]:
         result_1pass = set()
-        for ws in range(1, len(self.palabra)):
-            for i in range(0, (len(self.palabra) - ws) + 1):
-                win = self.palabra[i : i + ws]
+        for ws in range(1, len(self.word)):
+            for i in range(0, (len(self.word) - ws) + 1):
+                win = self.word[i : i + ws]
                 j = 0
                 while j < ws:
                     c = win[j]
@@ -207,7 +207,7 @@ class Fuzzer:
                         win_copy = win
                         for g in self.glyphs[c]:
                             win = win.replace(c, g)
-                            result_1pass.add(self.palabra[:i] + win + self.palabra[i + ws :])
+                            result_1pass.add(self.word[:i] + win + self.word[i + ws :])
                             win = win_copy
                     j += 1
         result_2pass = set()
@@ -229,65 +229,65 @@ class Fuzzer:
 
     def hyphenation_fuzzer(self) -> List[str]:
         result = []
-        for i in range(1, len(self.palabra)):
-            result.append(self.palabra[:i] + "-" + self.palabra[i:])
+        for i in range(1, len(self.word)):
+            result.append(self.word[:i] + "-" + self.word[i:])
         return result
 
     def insertion_fuzzer(self) -> List[str]:
         result = []
-        for i in range(1, len(self.palabra) - 1):
+        for i in range(1, len(self.word) - 1):
             for keys in self.keyboards:
-                if self.palabra[i] in keys:
-                    for c in keys[self.palabra[i]]:
-                        result.append(self.palabra[:i] + c + self.palabra[i] + self.palabra[i + 1 :])
-                        result.append(self.palabra[:i] + self.palabra[i] + c + self.palabra[i + 1 :])
+                if self.word[i] in keys:
+                    for c in keys[self.word[i]]:
+                        result.append(self.word[:i] + c + self.word[i] + self.word[i + 1 :])
+                        result.append(self.word[:i] + self.word[i] + c + self.word[i + 1 :])
         return list(set(result))
 
     def omission_fuzzer(self) -> List[str]:
         result = []
-        for i in range(0, len(self.palabra)):
-            result.append(self.palabra[:i] + self.palabra[i + 1 :])
-        n = re.sub(r"(.)\1+", r"\1", self.palabra)
-        if n not in result and n != self.palabra:
+        for i in range(0, len(self.word)):
+            result.append(self.word[:i] + self.word[i + 1 :])
+        n = re.sub(r"(.)\1+", r"\1", self.word)
+        if n not in result and n != self.word:
             result.append(n)
         return list(set(result))
 
     def repetition_fuzzer(self) -> List[str]:
         result = []
-        for i in range(0, len(self.palabra)):
-            if self.palabra[i].isalpha():
-                result.append(self.palabra[:i] + self.palabra[i] + self.palabra[i] + self.palabra[i + 1 :])
+        for i in range(0, len(self.word)):
+            if self.word[i].isalpha():
+                result.append(self.word[:i] + self.word[i] + self.word[i] + self.word[i + 1 :])
         return list(set(result))
 
     def replacement_fuzzer(self) -> List[str]:
         result = []
-        for i in range(0, len(self.palabra)):
+        for i in range(0, len(self.word)):
             for keys in self.keyboards:
-                if self.palabra[i] in keys:
-                    for c in keys[self.palabra[i]]:
-                        result.append(self.palabra[:i] + c + self.palabra[i + 1 :])
+                if self.word[i] in keys:
+                    for c in keys[self.word[i]]:
+                        result.append(self.word[:i] + c + self.word[i + 1 :])
         return list(set(result))
 
     def transposition_fuzzer(self) -> List[str]:
         result = []
-        for i in range(0, len(self.palabra) - 1):
-            if self.palabra[i + 1] != self.palabra[i]:
-                result.append(self.palabra[:i] + self.palabra[i + 1] + self.palabra[i] + self.palabra[i + 2 :])
+        for i in range(0, len(self.word) - 1):
+            if self.word[i + 1] != self.word[i]:
+                result.append(self.word[:i] + self.word[i + 1] + self.word[i] + self.word[i + 2 :])
         return result
 
     def vowel_swap_fuzzer(self) -> List[str]:
         vowels = "aeiou"
         result = []
-        for i in range(0, len(self.palabra)):
+        for i in range(0, len(self.word)):
             for vowel in vowels:
-                if self.palabra[i] in vowels:
-                    result.append(self.palabra[:i] + vowel + self.palabra[i + 1 :])
+                if self.word[i] in vowels:
+                    result.append(self.word[:i] + vowel + self.word[i + 1 :])
         return list(set(result))
 
     def addition_fuzzer(self) -> List[str]:
         result = []
         for i in range(97, 123):
-            result.append(self.palabra + chr(i))
+            result.append(self.word + chr(i))
         return result
 
     def generate(self) -> None:
@@ -335,23 +335,23 @@ class Fuzzer:
         return self.fuzzed_as_set
 
 
-class FuzzerDominio(Fuzzer):
+class FuzzerDomain(Fuzzer):
     def __init__(
         self,
-        dominio: str,
-        config: FuzzerDominioConfig | None = None,
+        domain: str,
+        config: FuzzerDomainConfig | None = None,
         append_words: List[str] | None = None,
         tld_dictionary: List[str] | None = None,
     ) -> None:
-        parsed_domain = domain_utils.parse_dominio(dominio)
-        self.subdominio = parsed_domain.subdominio
-        self.dominio = parsed_domain.dominio
+        parsed_domain = domain_utils.parse_domain(domain)
+        self.subdomain = parsed_domain.subdomain
+        self.domain = parsed_domain.domain
         self.tld = parsed_domain.tld
         self.append_words = append_words or []
         self.tld_swap_list = tld_dictionary or []
-        super().__init__(self.dominio, config)
-        self.config: FuzzerDominioConfig = config or FuzzerDominioConfig()
-        self.permutable_fuzzed_list_dict: List[str] = [self.dominio]
+        super().__init__(self.domain, config)
+        self.config: FuzzerDomainConfig = config or FuzzerDomainConfig()
+        self.permutable_fuzzed_list_dict: List[str] = [self.domain]
 
     def __filter_domains(self) -> None:
         def idna(domain: str) -> str:
@@ -381,9 +381,9 @@ class FuzzerDominio(Fuzzer):
 
     def subdomain_fuzzer(self) -> List[str]:
         result = []
-        for i in range(1, len(self.palabra) - 1):
-            if self.palabra[i] not in ["-", "."] and self.palabra[i - 1] not in ["-", "."]:
-                result.append(self.palabra[:i] + "." + self.palabra[i:])
+        for i in range(1, len(self.word) - 1):
+            if self.word[i] not in ["-", "."] and self.word[i - 1] not in ["-", "."]:
+                result.append(self.word[:i] + "." + self.word[i:])
         return result
 
     def append_word_fuzzer(self, separator: str) -> List[str]:
@@ -398,64 +398,64 @@ class FuzzerDominio(Fuzzer):
         if self.config.addition:
             for fuzzed in self.addition_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "addition", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "addition", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.addition_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.bitsquatting:
             for fuzzed in self.bitsquatting_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "bitsquatting", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "bitsquatting", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
         if self.config.homoglyph:
             for fuzzed in self.homoglyph_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "homoglyph", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "homoglyph", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
         if self.config.hyphenation:
             for fuzzed in self.hyphenation_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "hyphenation", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "hyphenation", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
         if self.config.insertion:
             for fuzzed in self.insertion_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "insertion", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "insertion", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.insertion_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.omission:
             for fuzzed in self.omission_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "omission", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "omission", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.omission_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.repetition:
             for fuzzed in self.repetition_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "repetition", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "repetition", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.repetition_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.replacement:
             for fuzzed in self.replacement_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "replacement", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "replacement", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.replacement_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.transposition:
             for fuzzed in self.transposition_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "transposition", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "transposition", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.transposition_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
         if self.config.vowel_swap:
             for fuzzed in self.vowel_swap_fuzzer():
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "vowel_swap", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "vowel_swap", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 if self.config.vowel_swap_permutable and (self.config.append_word or self.config.tld):
                     self.permutable_fuzzed_list_dict.append(fuzzed)
@@ -466,7 +466,7 @@ class FuzzerDominio(Fuzzer):
             aux = []
             for fuzzed in self.append_word_fuzzer(separator="-"):
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "append_word", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "append_word", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 self.fuzzed_list_dict.append({"fuzzer": "append_word", "fuzzed": ".".join(filter(None, [fuzzed, self.tld]))})
                 if self.config.tld:
@@ -477,7 +477,7 @@ class FuzzerDominio(Fuzzer):
                     aux.append(fuzzed)
             for fuzzed in self.append_word_fuzzer(separator=""):
                 self.fuzzed_list_dict.append(
-                    {"fuzzer": "append_word", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed, self.tld]))}
+                    {"fuzzer": "append_word", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed, self.tld]))}
                 )
                 self.fuzzed_list_dict.append({"fuzzer": "append_word", "fuzzed": ".".join(filter(None, [fuzzed, self.tld]))})
                 if self.config.tld:
@@ -485,10 +485,10 @@ class FuzzerDominio(Fuzzer):
             self.permutable_fuzzed_list_dict += aux
         if self.config.tld:
             for fuzzed in self.tld_fuzzer():
-                self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed]))})
+                self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [self.subdomain, fuzzed]))})
                 self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [fuzzed]))})
         del self.permutable_fuzzed_list_dict
-        aux = list({d["fuzzed"]: d for d in self.fuzzed_list_dict}.values())  # type: ignore  # Borro repetidos
+        aux = list({d["fuzzed"]: d for d in self.fuzzed_list_dict}.values())  # type: ignore  # Delete repeated
         self.fuzzed_list_dict = aux  # type: ignore
         del aux
         self.fuzzed_as_plain_list = [f["fuzzed"] for f in self.fuzzed_list_dict]
