@@ -1,3 +1,4 @@
+# TODO: Add the possibility to select a language fot the append words
 DOMAIN_APPEND_WORDS = [
     "home",
     "login",
