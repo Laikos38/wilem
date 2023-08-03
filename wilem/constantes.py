@@ -10,6 +10,7 @@ DOMAIN_APPEND_WORDS = [
     "cliente",
     "clientes",
     "reclamos",
+    "www",
 ]
 
 DOMAIN_TLDS = [

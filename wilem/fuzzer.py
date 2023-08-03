@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from wilem import domain_utils
 
@@ -38,6 +38,8 @@ class Fuzzer:
         self.palabra: str = palabra
         self.config = config or FuzzerConfig()
         self.fuzzed_list_dict: List[Dict[str, str]] = []
+        self.fuzzed_as_plain_list: List[str] = []
+        self.fuzzed_as_set: Set[str] = set()
         self.qwerty = {
             "1": "2q",
             "2": "3wq1",
@@ -319,6 +321,18 @@ class Fuzzer:
         if self.config.vowel_swap:
             for fuzzed in self.vowel_swap_fuzzer():
                 self.fuzzed_list_dict.append({"fuzzer": "vowel_swap", "fuzzed": fuzzed})
+        aux = list({d["fuzzed"]: d for d in self.fuzzed_list_dict}.values())
+        self.fuzzed_list_dict = aux
+        del aux
+        self.fuzzed_as_plain_list = [f["fuzzed"] for f in self.fuzzed_list_dict]
+
+    def get_fuzzed_as_list(self) -> List[str]:
+        return self.fuzzed_as_plain_list
+
+    def get_fuzzed_as_set(self) -> Set[str]:
+        if not self.fuzzed_as_set:
+            self.fuzzed_as_set = self.fuzzed_as_set = set(self.fuzzed_as_plain_list)
+        return self.fuzzed_as_set
 
 
 class FuzzerDominio(Fuzzer):
@@ -379,9 +393,6 @@ class FuzzerDominio(Fuzzer):
                 result.append(permutable + separator + word)
                 result.append(word + separator + permutable)
         return list(set(result))
-
-    def get_fuzzed_as_plain_list(self):
-        return [f["fuzzed"] for f in self.fuzzed_list_dict]
 
     def generate(self) -> None:
         if self.config.addition:
@@ -477,3 +488,7 @@ class FuzzerDominio(Fuzzer):
                 self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [self.subdominio, fuzzed]))})
                 self.fuzzed_list_dict.append({"fuzzer": "tld", "fuzzed": ".".join(filter(None, [fuzzed]))})
         del self.permutable_fuzzed_list_dict
+        aux = list({d["fuzzed"]: d for d in self.fuzzed_list_dict}.values())  # type: ignore  # Borro repetidos
+        self.fuzzed_list_dict = aux  # type: ignore
+        del aux
+        self.fuzzed_as_plain_list = [f["fuzzed"] for f in self.fuzzed_list_dict]
