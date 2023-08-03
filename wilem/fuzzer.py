@@ -1,8 +1,9 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Set
 
 from wilem import domain_utils
+from wilem.exceptions import FuzzerConfigException
 
 
 @dataclass
@@ -31,6 +32,19 @@ class FuzzerDomainConfig(FuzzerConfig):
     replacement_permutable: bool = True
     transposition_permutable: bool = True
     vowel_swap_permutable: bool = True
+
+    append_word_list: List[str] = field(default_factory=list)
+    tld_permutation_list: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.tld and self.tld_permutation_list is None:
+            raise FuzzerConfigException("config.tld enabled but not tld_permutation_list provided.")
+        if not self.tld and self.tld_permutation_list:
+            raise FuzzerConfigException("tld_permutation_list provided but config.tld is not enabled.")
+        if self.append_word and self.append_word_list is None:
+            raise FuzzerConfigException("config.append_word enabled but not append_word_list provided.")
+        if not self.append_word and self.append_word_list:
+            raise FuzzerConfigException("append_word_list provided but config.append_word is not enabled.")
 
 
 class Fuzzer:
@@ -340,42 +354,21 @@ class FuzzerDomain(Fuzzer):
         self,
         domain: str,
         config: FuzzerDomainConfig | None = None,
-        append_words: List[str] | None = None,
-        tld_dictionary: List[str] | None = None,
     ) -> None:
         parsed_domain = domain_utils.parse_domain(domain)
         self.subdomain = parsed_domain.subdomain
         self.domain = parsed_domain.domain
         self.tld = parsed_domain.tld
-        self.append_words = append_words or []
-        self.tld_swap_list = tld_dictionary or []
         super().__init__(self.domain, config)
         self.config: FuzzerDomainConfig = config or FuzzerDomainConfig()
         self.permutable_fuzzed_list_dict: List[str] = [self.domain]
 
-    def __filter_domains(self) -> None:
-        def idna(domain: str) -> str:
-            try:
-                return domain.encode("idna").decode()
-            except UnicodeError:
-                return ""
-
-        idna_domains = list(map(idna, [x["domain-name"] for x in self.fuzzed_list_dict]))
-        valid_regex = re.compile("(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}\.?$)", re.IGNORECASE)
-        seen = set()
-        filtered = []
-        for idx, domain in enumerate(idna_domains):
-            if valid_regex.match(domain) and domain not in seen:
-                filtered.append(self.fuzzed_list_dict[idx])
-                seen.add(domain)
-        self.fuzzed_list_dict = filtered
-
     def tld_fuzzer(self) -> List[str]:
         result = []
-        if self.tld in self.tld_swap_list:
-            self.tld_swap_list.remove(self.tld)
+        if self.tld in self.config.tld_permutation_list:
+            self.config.tld_permutation_list.remove(self.tld)
         for permutable in self.permutable_fuzzed_list_dict:
-            for tld in self.tld_swap_list:
+            for tld in self.config.tld_permutation_list:
                 result.append(permutable + "." + tld)
         return list(set(result))
 
@@ -389,7 +382,7 @@ class FuzzerDomain(Fuzzer):
     def append_word_fuzzer(self, separator: str) -> List[str]:
         result = []
         for permutable in self.permutable_fuzzed_list_dict:
-            for word in self.append_words:
+            for word in self.config.append_word_list:
                 result.append(permutable + separator + word)
                 result.append(word + separator + permutable)
         return list(set(result))
